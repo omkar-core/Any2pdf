@@ -8,23 +8,27 @@ export async function convertFile(fileDataUri: string, fileName: string, fileTyp
     console.log('File analysis:', analysis);
 
     const webhookUrl = 'https://nickjamerstudio.app.n8n.cloud/webhook/Any2PDF';
+    
+    // The n8n webhook might expect the file data without the data URI prefix.
+    const base64Data = fileDataUri.split(',')[1];
+
+    const payload = {
+      analysis,
+      file: {
+        name: fileName,
+        type: fileType,
+        data: base64Data, // Sending only the base64 part
+      },
+      action: 'convert',
+      targetFormat: targetFormat
+    };
 
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        analysis,
-        file: {
-          name: fileName,
-          type: fileType,
-          data: fileDataUri,
-        },
-        // Include the target format and the requested action
-        action: 'convert',
-        targetFormat: targetFormat
-      }),
+      body: JSON.stringify(payload),
     });
 
     if (!response.ok) {
@@ -36,6 +40,7 @@ export async function convertFile(fileDataUri: string, fileName: string, fileTyp
     const result = await response.json();
 
     if (result.convertedFile && result.convertedFile.data) {
+        // Reconstruct the data URI for the client
         const convertedDataUri = `data:${result.convertedFile.type || 'application/pdf'};base64,${result.convertedFile.data}`;
         return { success: true, url: convertedDataUri };
     } else {
@@ -63,7 +68,7 @@ export async function processPdfAction(files: { data: string, name: string, type
         files: files.map(file => ({
           name: file.name,
           type: file.type,
-          data: file.data,
+          data: file.data.split(',')[1], // Sending only the base64 part
         })),
         action,
         options,
