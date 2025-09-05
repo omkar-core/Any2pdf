@@ -3,12 +3,15 @@
 import { useState, useCallback, ChangeEvent, DragEvent, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File as FileIcon, Download, X, Cog, FileImage, FileText } from 'lucide-react';
+import { UploadCloud, File as FileIcon, Download, X, Cog, FileImage, FileText, ArrowRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { convertFile } from '@/app/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+
+type ConversionTarget = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'jpg' | 'png';
 
 type FileStatus = {
   file: File;
@@ -17,18 +20,40 @@ type FileStatus = {
   status: 'pending' | 'uploading' | 'converting' | 'success' | 'error';
   convertedFileUrl?: string;
   error?: string;
+  targetFormat: ConversionTarget;
 };
 
 const MAX_FILES = 10;
 const MAX_FILE_SIZE_MB = 25;
 const ALLOWED_FILE_TYPES = [
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+  'application/msword', // .doc
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+  'application/vnd.ms-excel', // .xls
   'application/vnd.openxmlformats-officedocument.presentationml.presentation', // .pptx
+  'application/vnd.ms-powerpoint', // .ppt
   'image/png', // .png
   'image/jpeg', // .jpg, .jpeg
   'image/tiff', // .tiff
+  'image/bmp', // .bmp
+  'image/gif', // .gif
+  'application/pdf', // .pdf
 ];
+
+const getTargetFormats = (fileType: string): ConversionTarget[] => {
+    if (fileType.startsWith('image/')) return ['pdf'];
+    if (fileType.includes('word') || fileType.includes('msword')) return ['pdf'];
+    if (fileType.includes('sheet') || fileType.includes('ms-excel')) return ['pdf'];
+    if (fileType.includes('presentation') || fileType.includes('ms-powerpoint')) return ['pdf'];
+    if (fileType === 'application/pdf') return ['docx', 'xlsx', 'pptx', 'jpg', 'png'];
+    return [];
+};
+
+const getDefaultTargetFormat = (fileType: string): ConversionTarget => {
+    const targets = getTargetFormats(fileType);
+    return targets[0] || 'pdf';
+};
+
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -47,10 +72,10 @@ const fileToDataUri = (file: File): Promise<string> => {
     });
 };
 
-const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, onRemove: () => void }) => {
+const FileProgressItem = ({ fileStatus, onRemove, onTargetFormatChange }: { fileStatus: FileStatus, onRemove: () => void, onTargetFormatChange: (id: string, format: ConversionTarget) => void }) => {
   const Icon = useMemo(() => {
     if (fileStatus.file.type.startsWith('image/')) return FileImage;
-    if (fileStatus.file.type.includes('document') || fileStatus.file.type.includes('presentation') || fileStatus.file.type.includes('sheet')) return FileText;
+    if (fileStatus.file.type.includes('document') || fileStatus.file.type.includes('presentation') || fileStatus.file.type.includes('sheet') || fileStatus.file.type.includes('pdf')) return FileText;
     return FileIcon;
   }, [fileStatus.file.type]);
 
@@ -64,16 +89,43 @@ const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, on
     }
   }, [fileStatus.status, fileStatus.error]);
 
+  const targetFormats = getTargetFormats(fileStatus.file.type);
+
   return (
     <div className="flex items-center space-x-4 rounded-lg border p-3">
       <Icon className="h-8 w-8 text-muted-foreground flex-shrink-0" />
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium truncate">{fileStatus.file.name}</p>
-        <p className="text-xs text-muted-foreground">{formatFileSize(fileStatus.file.size)}</p>
-        <div className="flex items-center gap-2 mt-1">
-          <Badge variant={fileStatus.status === 'success' ? 'default' : fileStatus.status === 'error' ? 'destructive' : 'secondary'}>
-            {statusInfo.text}
-          </Badge>
+        <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+          <span>{formatFileSize(fileStatus.file.size)}</span>
+          <div className="flex items-center gap-1">
+            <span>.{fileStatus.file.name.split('.').pop()}</span>
+            <ArrowRight className="h-3 w-3" />
+            {targetFormats.length > 1 ? (
+                <Select
+                    value={fileStatus.targetFormat}
+                    onValueChange={(value) => onTargetFormatChange(fileStatus.id, value as ConversionTarget)}
+                    disabled={fileStatus.status !== 'pending'}
+                >
+                    <SelectTrigger className="h-6 text-xs w-auto px-2 py-1">
+                        <SelectValue placeholder="Select format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {targetFormats.map(format => (
+                            <SelectItem key={format} value={format}>.{format}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            ) : (
+                <span>.{fileStatus.targetFormat}</span>
+            )}
+           </div>
+        </div>
+
+        <div className="flex items-center gap-2 mt-2">
+            <Badge variant={fileStatus.status === 'success' ? 'default' : fileStatus.status === 'error' ? 'destructive' : 'secondary'}>
+                {statusInfo.text}
+            </Badge>
         </div>
         {(fileStatus.status === 'uploading' || fileStatus.status === 'converting') && (
            <Progress value={fileStatus.progress} className="h-2 mt-2" />
@@ -81,7 +133,7 @@ const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, on
       </div>
       <div className="flex items-center gap-2">
         {fileStatus.status === 'success' && fileStatus.convertedFileUrl && (
-          <a href={fileStatus.convertedFileUrl} download={`${fileStatus.file.name.split('.').slice(0, -1).join('.')}.pdf`}>
+          <a href={fileStatus.convertedFileUrl} download={`${fileStatus.file.name.split('.').slice(0, -1).join('.')}.${fileStatus.targetFormat}`}>
             <Button size="icon" variant="outline">
               <Download className="h-4 w-4" />
             </Button>
@@ -116,7 +168,8 @@ export function FileUploader() {
         toast({ variant: 'destructive', title: 'Duplicate File', description: `File "${file.name}" is already in the list.` });
         continue;
       }
-      filesToAdd.push({ file, id: `${file.name}-${file.size}-${Date.now()}`, progress: 0, status: 'pending' });
+      const targetFormat = getDefaultTargetFormat(file.type);
+      filesToAdd.push({ file, id: `${file.name}-${file.size}-${Date.now()}`, progress: 0, status: 'pending', targetFormat });
     }
     
     if (files.length + filesToAdd.length > MAX_FILES) {
@@ -149,6 +202,10 @@ export function FileUploader() {
 
   const removeFile = (id: string) => {
     setFiles(prev => prev.filter(f => f.id !== id));
+  };
+
+  const handleTargetFormatChange = (id: string, format: ConversionTarget) => {
+    setFiles(prev => prev.map(f => f.id === id ? { ...f, targetFormat: format } : f));
   };
 
   const processFileConversion = async (id: string) => {
@@ -210,7 +267,7 @@ export function FileUploader() {
             className="hidden" 
             multiple 
             onChange={handleFileChange}
-            accept=".docx,.xlsx,.pptx,.png,.jpg,.jpeg,.tiff"
+            accept={ALLOWED_FILE_TYPES.join(',')}
           />
           <label htmlFor="file-upload" className="cursor-pointer flex flex-col items-center">
             <UploadCloud className="w-12 h-12 text-muted-foreground mb-4" />
@@ -228,6 +285,7 @@ export function FileUploader() {
                 key={fileStatus.id}
                 fileStatus={fileStatus}
                 onRemove={() => removeFile(fileStatus.id)}
+                onTargetFormatChange={handleTargetFormatChange}
               />
             ))}
             <Button 
