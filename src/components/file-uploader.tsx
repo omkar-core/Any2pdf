@@ -11,9 +11,9 @@ import { cn } from '@/lib/utils';
 import { convertFile } from '@/app/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
-type ConversionTarget = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'jpg' | 'png';
+export type ConversionTarget = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'jpg' | 'png' | 'html' | 'pdfa';
 
-type FileStatus = {
+export type FileStatus = {
   file: File;
   id: string;
   progress: number;
@@ -38,6 +38,7 @@ const ALLOWED_FILE_TYPES = [
   'image/bmp', // .bmp
   'image/gif', // .gif
   'application/pdf', // .pdf
+  'text/html', // .html
 ];
 
 const getTargetFormats = (fileType: string): ConversionTarget[] => {
@@ -45,7 +46,8 @@ const getTargetFormats = (fileType: string): ConversionTarget[] => {
     if (fileType.includes('word') || fileType.includes('msword')) return ['pdf'];
     if (fileType.includes('sheet') || fileType.includes('ms-excel')) return ['pdf'];
     if (fileType.includes('presentation') || fileType.includes('ms-powerpoint')) return ['pdf'];
-    if (fileType === 'application/pdf') return ['docx', 'xlsx', 'pptx', 'jpg', 'png'];
+    if (fileType === 'text/html') return ['pdf'];
+    if (fileType === 'application/pdf') return ['docx', 'xlsx', 'pptx', 'jpg', 'png', 'pdfa'];
     return [];
 };
 
@@ -53,7 +55,6 @@ const getDefaultTargetFormat = (fileType: string): ConversionTarget => {
     const targets = getTargetFormats(fileType);
     return targets[0] || 'pdf';
 };
-
 
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
@@ -219,7 +220,7 @@ export function FileUploader() {
         
         setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'converting', progress: 50 } : f));
 
-        const result = await convertFile(dataUri, fileStatus.file.name, fileStatus.file.type);
+        const result = await convertFile(dataUri, fileStatus.file.name, fileStatus.file.type, fileStatus.targetFormat);
 
         if (result.success && result.url) {
             setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'success', progress: 100, convertedFileUrl: result.url } : f));
@@ -249,15 +250,14 @@ export function FileUploader() {
   };
 
   return (
-    <Card className="shadow-lg border-2 border-dashed border-border hover:border-primary transition-all duration-300 bg-background/50">
-      <CardContent className="p-6">
+    <div>
         <div 
           onDragEnter={(e) => handleDragEvents(e, true)}
           onDragLeave={(e) => handleDragEvents(e, false)}
           onDragOver={(e) => handleDragEvents(e, true)}
           onDrop={handleDrop}
           className={cn(
-            "flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-lg transition-colors",
+            "flex flex-col items-center justify-center p-8 md:p-12 text-center rounded-lg transition-colors border-2 border-dashed border-border hover:border-primary",
             isDragging && "bg-primary/10"
           )}
         >
@@ -299,7 +299,6 @@ export function FileUploader() {
             </Button>
           </div>
         )}
-      </CardContent>
-    </Card>
+    </div>
   );
 }

@@ -1,4 +1,4 @@
-import { FileUploader } from '@/components/file-uploader';
+import { ConversionTools } from '@/components/conversion-tools';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 
@@ -12,12 +12,11 @@ export default function Home() {
             Any2PDF
           </h1>
           <p className="mt-4 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            The ultimate tool for converting your files. Securely convert office
-            documents and images to high-quality PDFs in just a few clicks.
+            The ultimate suite of tools for your documents. Securely convert, merge, split, and compress your files in just a few clicks.
           </p>
         </section>
-        <section className="mt-8 md:mt-12 max-w-3xl mx-auto">
-          <FileUploader />
+        <section className="mt-8 md:mt-12 max-w-5xl mx-auto">
+          <ConversionTools />
         </section>
       </main>
       <Footer />
