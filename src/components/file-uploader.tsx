@@ -3,11 +3,12 @@
 import { useState, useCallback, ChangeEvent, DragEvent, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, File as FileIcon, CheckCircle2, AlertCircle, Download, X, Cog, FileImage, FileText } from 'lucide-react';
+import { UploadCloud, File as FileIcon, Download, X, Cog, FileImage, FileText } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
+import { convertFile } from '@/app/actions';
 
 type FileStatus = {
   file: File;
@@ -37,6 +38,15 @@ const formatFileSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
+const fileToDataUri = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+};
+
 const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, onRemove: () => void }) => {
   const Icon = useMemo(() => {
     if (fileStatus.file.type.startsWith('image/')) return FileImage;
@@ -46,13 +56,13 @@ const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, on
 
   const statusInfo = useMemo(() => {
     switch (fileStatus.status) {
-      case 'pending': return { text: 'Pending conversion', color: 'bg-gray-400' };
-      case 'uploading': return { text: `Uploading... ${fileStatus.progress}%`, color: 'bg-blue-500' };
-      case 'converting': return { text: `Converting... ${fileStatus.progress}%`, color: 'bg-yellow-500' };
-      case 'success': return { text: 'Converted successfully!', color: 'bg-green-500' };
-      case 'error': return { text: fileStatus.error || 'Conversion failed', color: 'bg-red-500' };
+      case 'pending': return { text: 'Pending conversion' };
+      case 'uploading': return { text: 'Preparing...' };
+      case 'converting': return { text: 'Converting...' };
+      case 'success': return { text: 'Converted successfully!' };
+      case 'error': return { text: fileStatus.error || 'Conversion failed' };
     }
-  }, [fileStatus.status, fileStatus.progress, fileStatus.error]);
+  }, [fileStatus.status, fileStatus.error]);
 
   return (
     <div className="flex items-center space-x-4 rounded-lg border p-3">
@@ -70,10 +80,12 @@ const FileProgressItem = ({ fileStatus, onRemove }: { fileStatus: FileStatus, on
         )}
       </div>
       <div className="flex items-center gap-2">
-        {fileStatus.status === 'success' && (
-          <Button size="icon" variant="outline" onClick={() => window.open(fileStatus.convertedFileUrl, '_blank')}>
-            <Download className="h-4 w-4" />
-          </Button>
+        {fileStatus.status === 'success' && fileStatus.convertedFileUrl && (
+          <a href={fileStatus.convertedFileUrl} download={`${fileStatus.file.name.split('.').slice(0, -1).join('.')}.pdf`}>
+            <Button size="icon" variant="outline">
+              <Download className="h-4 w-4" />
+            </Button>
+          </a>
         )}
         <Button size="icon" variant="ghost" onClick={onRemove}>
           <X className="h-4 w-4" />
@@ -138,40 +150,29 @@ export function FileUploader() {
   const removeFile = (id: string) => {
     setFiles(prev => prev.filter(f => f.id !== id));
   };
-  
-  const simulateConversion = (id: string) => {
-    return new Promise<void>((resolve, reject) => {
-      let progress = 0;
-      setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'uploading', progress: 0 } : f));
-      
-      const uploadInterval = setInterval(() => {
-        progress += Math.random() * 10;
-        if (progress >= 100) {
-          clearInterval(uploadInterval);
-          progress = 0;
-          setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'converting', progress: 0 } : f));
-          
-          const convertInterval = setInterval(() => {
-            progress += Math.random() * 20;
-            if (progress >= 100) {
-              clearInterval(convertInterval);
-              // Simulate success/error
-              if (Math.random() > 0.1) { // 90% success rate
-                setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'success', progress: 100, convertedFileUrl: URL.createObjectURL(new Blob(["mock pdf content"], { type: "application/pdf" })) } : f));
-                resolve();
-              } else {
-                setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'error', error: 'Conversion failed' } : f));
-                reject();
-              }
-            } else {
-              setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'converting', progress: Math.min(100, Math.round(progress)) } : f));
-            }
-          }, 200);
+
+  const processFileConversion = async (id: string) => {
+    const fileStatus = files.find(f => f.id === id);
+    if (!fileStatus) return;
+
+    try {
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'uploading', progress: 25 } : f));
+        
+        const dataUri = await fileToDataUri(fileStatus.file);
+        
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'converting', progress: 50 } : f));
+
+        const result = await convertFile(dataUri, fileStatus.file.name, fileStatus.file.type);
+
+        if (result.success && result.url) {
+            setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'success', progress: 100, convertedFileUrl: result.url } : f));
         } else {
-          setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'uploading', progress: Math.min(100, Math.round(progress)) } : f));
+            throw new Error(result.error || 'Conversion failed');
         }
-      }, 100);
-    });
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'error', error: errorMessage } : f));
+    }
   };
 
   const handleConvertAll = async () => {
@@ -183,13 +184,8 @@ export function FileUploader() {
       return;
     }
     
-    for (const file of pendingFiles) {
-      try {
-        await simulateConversion(file.id);
-      } catch (error) {
-        console.error(`Failed to convert ${file.file.name}`);
-      }
-    }
+    const conversionPromises = pendingFiles.map(file => processFileConversion(file.id));
+    await Promise.all(conversionPromises);
 
     setIsConverting(false);
     toast({ title: 'Conversion process finished', description: 'Check the status of each file.' });

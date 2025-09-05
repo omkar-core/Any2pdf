@@ -3,3 +3,4 @@ config();
 
 import '@/ai/flows/suggest-alternative-conversion-tool.ts';
 import '@/ai/flows/ocr-text-extraction.ts';
+import '@/ai/flows/analyze-file.ts';
