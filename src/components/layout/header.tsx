@@ -39,6 +39,9 @@ export function Header() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
+            <Button variant="ghost" asChild>
+              <Link href="/signin">Sign In</Link>
+            </Button>
             <Button asChild>
               <Link href="/#tools">Get Started</Link>
             </Button>

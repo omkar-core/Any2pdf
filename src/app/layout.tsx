@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+import { Analytics } from "@/components/analytics"
 
 const ptSans = PT_Sans({
   subsets: ['latin'],
@@ -23,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${ptSans.variable} font-body antialiased`}>
+        <Analytics />
         <div className="relative flex min-h-screen flex-col bg-background">
           {children}
         </div>

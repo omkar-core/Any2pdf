@@ -9,6 +9,8 @@ import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 import { convertFile } from '@/app/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { FREE_DAILY_LIMIT, getUsageCount, incrementUsage, isUsageLimitReached } from '@/lib/freemium';
+import Link from 'next/link';
 
 export type ConversionTarget = 'pdf' | 'docx' | 'xlsx' | 'pptx' | 'jpg' | 'png' | 'html' | 'pdfa';
 
@@ -223,6 +225,16 @@ export function FileUploader() {
     const fileStatus = files.find(f => f.id === id);
     if (!fileStatus) return;
 
+    if (isUsageLimitReached()) {
+      setFiles(prev => prev.map(f => f.id === id ? {
+        ...f,
+        status: 'error',
+        error: `Free daily limit of ${FREE_DAILY_LIMIT} conversions reached. Upgrade to continue converting.`,
+        suggestions: ['Upgrade to Pro', 'Wait until tomorrow for your daily limit to reset'],
+      } : f));
+      return;
+    }
+
     try {
         setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'uploading', progress: 25 } : f));
         
@@ -233,6 +245,7 @@ export function FileUploader() {
         const result = await convertFile(dataUri, fileStatus.file.name, fileStatus.file.type, fileStatus.targetFormat);
 
         if (result.success && result.url) {
+            incrementUsage();
             setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'success', progress: 100, convertedFileUrl: result.url } : f));
         } else if (result.suggestions && result.suggestions.length > 0) {
             setFiles(prev => prev.map(f => f.id === id ? {
@@ -296,6 +309,14 @@ export function FileUploader() {
         
         {files.length > 0 && (
           <div className="mt-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border bg-muted/40 p-3 text-sm">
+              <span className="text-muted-foreground">
+                Free plan: {Math.max(0, FREE_DAILY_LIMIT - getUsageCount())} of {FREE_DAILY_LIMIT} conversions left today
+              </span>
+              <Link href="/#pricing" className="font-medium text-primary underline underline-offset-4">
+                Upgrade for unlimited
+              </Link>
+            </div>
             <h3 className="text-lg font-semibold">Your Files</h3>
             {files.map(fileStatus => (
               <FileProgressItem 

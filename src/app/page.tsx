@@ -1,6 +1,7 @@
 import { ConversionTools } from '@/components/conversion-tools';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
+import { PricingSection } from '@/components/pricing-section';
 
 export default function Home() {
   return (
@@ -18,6 +19,9 @@ export default function Home() {
         <section id="tools" className="mt-8 md:mt-12 max-w-5xl mx-auto scroll-mt-20">
           <ConversionTools />
         </section>
+        <div className="mt-16 md:mt-24">
+          <PricingSection />
+        </div>
       </main>
       <Footer />
     </div>

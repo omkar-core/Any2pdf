@@ -18,6 +18,10 @@ Built with Next.js (App Router), React, Tailwind CSS, shadcn/ui, Radix UI, and G
 - **OCR text extraction** — scanned images are run through OCR so the generated PDF text is selectable and searchable.
 - **LLM file analysis** — files are analyzed for safety and content before conversion.
 - **Smart failure recovery** — when the primary conversion path fails, the LLM recommends alternative tools.
+- **Server-side validation** — file type, size, and base64 integrity are checked on the server before any external call.
+- **Accounts** — Google sign-in and email/password authentication (Firebase Auth), enabled once the public Firebase vars are set.
+- **Freemium plan** — a daily free conversion limit with an upgrade path to a Stripe-powered Pro subscription.
+- **Analytics** — Google Analytics 4 tracking, loaded only when `NEXT_PUBLIC_GA_MEASUREMENT_ID` is set.
 
 ## Getting Started
 
@@ -34,6 +38,12 @@ Copy `.env.example` to `.env` and fill in the values:
 
 - `GOOGLE_GENAI_API_KEY` — Google AI (Gemini) API key used by the Genkit flows in `src/ai/`.
 - `N8N_WEBHOOK_URL` — the n8n webhook endpoint that orchestrates conversions (currently defaults to the URL defined in `src/app/actions.ts`).
+- `NEXT_PUBLIC_FIREBASE_*` — (optional) Firebase project config. When set, Google and email/password sign-in become available at `/signin`.
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` — (optional) Google Analytics 4 measurement ID.
+- `STRIPE_SECRET_KEY` + `STRIPE_PRICE_ID` — (optional) enable the Stripe Pro subscription checkout from the pricing section.
+- `NEXT_PUBLIC_APP_URL` — (optional, production) the public origin used for Stripe success/cancel URLs.
+
+All optional integrations degrade gracefully: the UI hides or inlines a setup notice until the relevant variables are provided.
 
 ### Scripts
 
@@ -52,18 +62,25 @@ Copy `.env.example` to `.env` and fill in the values:
 src/
 ├── ai/                   # Genkit setup + AI flows
 │   └── flows/            # analyze-file, ocr-text-extraction, suggest-alternative-conversion-tool
-├── app/                  # Next.js App Router pages (home, about, blog, contact, disclaimer, faq, privacy, terms)
-│   ├── actions.ts        # Server Actions: convertFile, processPdfAction
+├── app/                  # Next.js App Router pages (home, about, blog, contact, disclaimer, faq, privacy, signin, terms)
+│   ├── actions.ts        # Server Actions: convertFile, processPdfAction, createCheckoutSession
 │   └── layout.tsx        # Root layout + fonts
 ├── components/
 │   ├── conversion-tools.tsx  # Main tool tabs
 │   ├── file-uploader.tsx     # Bulk convert file uploader
 │   ├── pdf-tool.tsx          # Reusable engine for merge/split/compress/rotate/protect/watermark/extract
+│   ├── analytics.tsx         # GA4 tracking (env-gated)
+│   ├── pricing-section.tsx   # Free/Pro plans + Stripe checkout
 │   ├── layout/               # Header & footer
 │   └── ui/                   # shadcn/ui components
 ├── hooks/
 └── lib/
+    ├── validation.ts    # Server-side file type/size/base64 checks
+    ├── firebase.ts      # Lazy Firebase client init (no-op when unconfigured)
+    └── freemium.ts      # Daily free conversion counter (localStorage)
 ```
+
+`firestore.rules` and `storage.rules` at the repo root lock down Firebase data access to each user's own records.
 
 Conversion requests are sent to an n8n webhook (`src/app/actions.ts`) that performs the heavy lifting (CloudConvert or equivalent API calls, PDF tool operations) and returns the resulting file as a base64 data URI, which the client offers as a direct download.
 

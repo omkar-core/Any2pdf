@@ -1,0 +1,20 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Users access only their own profile and history.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Conversion history: authenticated users may create their own records.
+    match /conversions/{document} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && request.resource.data.uid == request.auth.uid;
+    }
+  }
+}

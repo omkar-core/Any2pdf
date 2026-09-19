@@ -1,14 +1,28 @@
 'use server';
 
+import Stripe from 'stripe';
 import { analyzeFile } from "@/ai/flows/analyze-file";
 import { ocrTextExtraction } from "@/ai/flows/ocr-text-extraction";
 import { suggestAlternativeConversionTool } from "@/ai/flows/suggest-alternative-conversion-tool";
+import {
+  isValidMimeType,
+  isPdfMimeType,
+  validateBase64Payload,
+  validateFileName,
+  toValidatedError,
+} from "@/lib/validation";
 
 const WEBHOOK_URL =
   process.env.N8N_WEBHOOK_URL || 'https://nickjamerstudio.app.n8n.cloud/webhook/Any2PDF';
 
 export async function convertFile(fileDataUri: string, fileName: string, fileType: string, targetFormat: string) {
   try {
+    validateFileName(fileName);
+    if (!isValidMimeType(fileType)) {
+      throw new Error(`File type "${fileType}" is not supported.`);
+    }
+    validateBase64Payload(fileDataUri);
+
     const analysis = await analyzeFile({ fileDataUri, fileName, fileType });
     console.log('File analysis:', analysis);
 
@@ -66,7 +80,7 @@ export async function convertFile(fileDataUri: string, fileName: string, fileTyp
     }
   } catch (error) {
     console.error('Error during file conversion:', error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = toValidatedError(error).message;
 
     // Ask the LLM to recommend alternative conversion tools when the primary path fails.
     try {
@@ -87,6 +101,20 @@ export async function convertFile(fileDataUri: string, fileName: string, fileTyp
 // A generic action to handle other PDF tools
 export async function processPdfAction(files: { data: string, name: string, type: string }[], action: string, options?: Record<string, string>) {
   try {
+    if (!Array.isArray(files) || files.length === 0) {
+      throw new Error('No files provided.');
+    }
+    if (files.length > 10) {
+      throw new Error('You can only process up to 10 files at a time.');
+    }
+    for (const file of files) {
+      validateFileName(file.name);
+      if (!isPdfMimeType(file.type)) {
+        throw new Error(`"${file.name}" is not a PDF file.`);
+      }
+      validateBase64Payload(file.data);
+    }
+
     const webhookUrl = WEBHOOK_URL;
 
     const response = await fetch(webhookUrl, {
@@ -123,7 +151,39 @@ export async function processPdfAction(files: { data: string, name: string, type
 
   } catch (error) {
     console.error(`Error during ${action} action:`, error);
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = toValidatedError(error).message;
     return { success: false, error: errorMessage };
+  }
+}
+
+// Starts a Stripe checkout session for the Pro subscription.
+// Returns a checkout URL the client redirects to. No-ops when Stripe is unconfigured.
+export async function createCheckoutSession() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  const priceId = process.env.STRIPE_PRICE_ID;
+  if (!secretKey || !priceId) {
+    return { success: false, error: 'Stripe is not configured. Set STRIPE_SECRET_KEY and STRIPE_PRICE_ID.' };
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+
+  try {
+    const stripe = new Stripe(secretKey);
+    const session = await stripe.checkout.sessions.create({
+      mode: 'subscription',
+      payment_method_types: ['card'],
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${baseUrl}/?checkout=success`,
+      cancel_url: `${baseUrl}/#pricing`,
+    });
+
+    if (!session.url) {
+      return { success: false, error: 'Stripe did not return a checkout URL.' };
+    }
+    return { success: true, url: session.url };
+  } catch (error) {
+    console.error('Error creating Stripe checkout session:', error);
+    const errorMessage = toValidatedError(error).message;
+    return { success: false, error: `Could not start checkout: ${errorMessage}` };
   }
 }
