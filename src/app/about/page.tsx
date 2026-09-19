@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+export const metadata: Metadata = {
+  title: 'About Any2PDF',
+  description:
+    'Learn about Any2PDF, the free and secure toolkit for converting, merging, splitting, compressing, and protecting your documents.',
+};
 
 export default function AboutPage() {
   return (
@@ -16,10 +23,10 @@ export default function AboutPage() {
               Welcome to Any2PDF, your all-in-one solution for seamless and secure file conversions. Our mission is to provide a powerful, intuitive, and reliable tool that simplifies the process of converting various file formats into high-quality PDFs.
             </p>
             <p>
-              In today's fast-paced digital world, the need for a universal document format is more critical than ever. PDF has emerged as the standard for sharing and archiving documents, ensuring that your files look the same on any device. However, converting different file types—from office documents to images—can often be a cumbersome task. Any2PDF was created to solve this problem.
+              In today&apos;s fast-paced digital world, the need for a universal document format is more critical than ever. PDF has emerged as the standard for sharing and archiving documents, ensuring that your files look the same on any device. However, converting different file types—from office documents to images—can often be a cumbersome task. Any2PDF was created to solve this problem.
             </p>
             <p>
-              We leverage cutting-edge technology, including advanced conversion APIs and the power of Generative AI, to deliver precise and efficient conversions. Our platform supports a wide range of file types, including DOCX, XLSX, PPTX, PNG, JPG, and TIFF. Whether you're a student, a professional, or anyone in between, Any2PDF is designed to meet your needs with features like bulk processing, real-time progress tracking, and robust security options.
+              We leverage cutting-edge technology, including advanced conversion APIs and the power of Generative AI, to deliver precise and efficient conversions. Our platform supports a wide range of file types, including DOCX, XLSX, PPTX, PNG, JPG, and TIFF. Whether you&apos;re a student, a professional, or anyone in between, Any2PDF is designed to meet your needs with features like bulk processing, real-time progress tracking, and robust security options.
             </p>
             <p>
               At Any2PDF, we are committed to user privacy and data security. We utilize Firebase for secure storage and authentication, ensuring that your files and personal information are always protected. Our goal is to provide a service you can trust, with a user-friendly experience that makes file conversion a breeze.

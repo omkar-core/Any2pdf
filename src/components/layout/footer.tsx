@@ -4,11 +4,16 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
   return (
     <footer className="border-t">
-      <div className="container mx-auto px-4 py-6 flex flex-col sm:flex-row justify-between items-center text-sm text-muted-foreground">
+      <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
         <p>&copy; {currentYear} Any2PDF. All rights reserved.</p>
-        <nav className="flex gap-4 mt-4 sm:mt-0">
+        <nav className="flex flex-wrap justify-center gap-4 mt-4 md:mt-0">
+          <Link href="/about" className="hover:text-foreground transition-colors">About Us</Link>
+          <Link href="/contact" className="hover:text-foreground transition-colors">Contact</Link>
+          <Link href="/blog" className="hover:text-foreground transition-colors">Blog</Link>
+          <Link href="/faq" className="hover:text-foreground transition-colors">FAQ</Link>
           <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
           <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+          <Link href="/disclaimer" className="hover:text-foreground transition-colors">Disclaimer</Link>
         </nav>
       </div>
     </footer>

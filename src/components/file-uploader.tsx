@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useCallback, ChangeEvent, DragEvent, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { UploadCloud, File as FileIcon, Download, X, Cog, FileImage, FileText, ArrowRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
@@ -20,6 +19,7 @@ export type FileStatus = {
   status: 'pending' | 'uploading' | 'converting' | 'success' | 'error';
   convertedFileUrl?: string;
   error?: string;
+  suggestions?: string[];
   targetFormat: ConversionTarget;
 };
 
@@ -131,6 +131,16 @@ const FileProgressItem = ({ fileStatus, onRemove, onTargetFormatChange }: { file
         {(fileStatus.status === 'uploading' || fileStatus.status === 'converting') && (
            <Progress value={fileStatus.progress} className="h-2 mt-2" />
         )}
+        {fileStatus.status === 'error' && fileStatus.suggestions && fileStatus.suggestions.length > 0 && (
+          <div className="mt-2 text-xs text-muted-foreground">
+            <p className="font-medium text-foreground">Recommended alternatives:</p>
+            <ul className="list-disc list-inside mt-1">
+              {fileStatus.suggestions.map((tool, index) => (
+                <li key={`${tool}-${index}`}>{tool}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
       <div className="flex items-center gap-2">
         {fileStatus.status === 'success' && fileStatus.convertedFileUrl && (
@@ -224,6 +234,13 @@ export function FileUploader() {
 
         if (result.success && result.url) {
             setFiles(prev => prev.map(f => f.id === id ? { ...f, status: 'success', progress: 100, convertedFileUrl: result.url } : f));
+        } else if (result.suggestions && result.suggestions.length > 0) {
+            setFiles(prev => prev.map(f => f.id === id ? {
+                ...f,
+                status: 'error',
+                error: result.error || 'Conversion failed',
+                suggestions: result.suggestions,
+            } : f));
         } else {
             throw new Error(result.error || 'Conversion failed');
         }

@@ -20,6 +20,18 @@ export function Header() {
             About
           </Link>
           <Link
+            href="/blog"
+            className="transition-colors hover:text-foreground/80 text-foreground/60"
+          >
+            Blog
+          </Link>
+          <Link
+            href="/faq"
+            className="transition-colors hover:text-foreground/80 text-foreground/60"
+          >
+            FAQ
+          </Link>
+          <Link
             href="/contact"
             className="transition-colors hover:text-foreground/80 text-foreground/60"
           >
@@ -27,7 +39,9 @@ export function Header() {
           </Link>
         </nav>
         <div className="ml-auto flex items-center gap-4">
-            <Button>Sign In</Button>
+            <Button asChild>
+              <Link href="/#tools">Get Started</Link>
+            </Button>
         </div>
       </div>
     </header>

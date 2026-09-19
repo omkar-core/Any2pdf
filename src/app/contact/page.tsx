@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -5,6 +6,12 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
+
+export const metadata: Metadata = {
+  title: 'Contact Us - Any2PDF',
+  description:
+    'Have a question or feedback about Any2PDF? Contact our support team and we will get back to you within 24–48 hours.',
+};
 
 export default function ContactPage() {
   return (
@@ -15,7 +22,7 @@ export default function ContactPage() {
           <CardHeader>
             <CardTitle className="text-3xl font-headline">Contact Us</CardTitle>
             <CardDescription>
-              Have questions or feedback? We'd love to hear from you.
+              Have questions or feedback? We&apos;d love to hear from you.
             </CardDescription>
           </CardHeader>
           <CardContent>

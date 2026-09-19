@@ -15,7 +15,7 @@ export default function Home() {
             The ultimate suite of tools for your documents. Securely convert, merge, split, and compress your files in just a few clicks.
           </p>
         </section>
-        <section className="mt-8 md:mt-12 max-w-5xl mx-auto">
+        <section id="tools" className="mt-8 md:mt-12 max-w-5xl mx-auto scroll-mt-20">
           <ConversionTools />
         </section>
       </main>

@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+export const metadata: Metadata = {
+  title: 'Terms of Service - Any2PDF',
+  description:
+    'The terms and conditions that govern your use of Any2PDF, the free browser-based document conversion toolkit.',
+};
 
 export default function TermsOfServicePage() {
   return (
@@ -13,7 +20,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent className="space-y-4 text-muted-foreground leading-relaxed">
             <h2 className="text-xl font-semibold text-foreground">1. Acceptance of Terms</h2>
-            <p>By using Any2PDF (the "Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
+            <p>By using Any2PDF (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service.</p>
             
             <h2 className="text-xl font-semibold text-foreground">2. Description of Service</h2>
             <p>Any2PDF provides users with tools to convert, merge, split, and manage digital files. You are responsible for all files you upload and process through the Service.</p>
@@ -25,7 +32,7 @@ export default function TermsOfServicePage() {
             <p>You retain ownership of the content you upload to the Service. By using the Service, you grant us a limited license to process your files as necessary to provide the features of the Service.</p>
 
             <h2 className="text-xl font-semibold text-foreground">5. Disclaimer of Warranties</h2>
-            <p>The Service is provided "as is" without any warranties of any kind. We do not guarantee that the Service will be error-free or that conversions will be accurate or complete.</p>
+            <p>The Service is provided &quot;as is&quot; without any warranties of any kind. We do not guarantee that the Service will be error-free or that conversions will be accurate or complete.</p>
             
             <h2 className="text-xl font-semibold text-foreground">6. Limitation of Liability</h2>
             <p>In no event shall Any2PDF be liable for any indirect, incidental, or consequential damages arising out of your use of the Service.</p>

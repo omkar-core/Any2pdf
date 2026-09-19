@@ -1,6 +1,13 @@
+import type { Metadata } from 'next';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+export const metadata: Metadata = {
+  title: 'Privacy Policy - Any2PDF',
+  description:
+    'Read the Any2PDF privacy policy to understand how we collect, use, and protect your information and files.',
+};
 
 export default function PrivacyPolicyPage() {
   return (

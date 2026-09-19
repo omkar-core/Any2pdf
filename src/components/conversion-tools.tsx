@@ -11,29 +11,41 @@ import {
   GitMerge,
   Scissors,
   Minimize,
-  FileText,
+  RotateCw,
+  ShieldCheck,
+  Droplets,
+  Layers,
 } from "lucide-react";
 import { FileUploader } from "./file-uploader";
-import { PlaceholderTool } from "./placeholder-tool";
+import { PdfTool } from "./pdf-tool";
 
 export function ConversionTools() {
   return (
     <Tabs defaultValue="convert" className="w-full">
-      <TabsList className="grid w-full grid-cols-2 md:grid-cols-5 h-auto">
-        <TabsTrigger value="convert" className="flex flex-col md:flex-row gap-2 items-center py-2">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 xl:grid-cols-8 h-auto">
+        <TabsTrigger value="convert" className="flex flex-col gap-2 items-center py-2">
           <FileUp className="h-5 w-5" /> Convert
         </TabsTrigger>
-        <TabsTrigger value="merge" className="flex flex-col md:flex-row gap-2 items-center py-2">
+        <TabsTrigger value="merge" className="flex flex-col gap-2 items-center py-2">
           <GitMerge className="h-5 w-5" /> Merge
         </TabsTrigger>
-        <TabsTrigger value="split" className="flex flex-col md:flex-row gap-2 items-center py-2">
+        <TabsTrigger value="split" className="flex flex-col gap-2 items-center py-2">
           <Scissors className="h-5 w-5" /> Split
         </TabsTrigger>
-        <TabsTrigger value="compress" className="flex flex-col md:flex-row gap-2 items-center py-2">
+        <TabsTrigger value="compress" className="flex flex-col gap-2 items-center py-2">
           <Minimize className="h-5 w-5" /> Compress
         </TabsTrigger>
-        <TabsTrigger value="edit" className="flex flex-col md:flex-row gap-2 items-center py-2">
-          <FileText className="h-5 w-5" /> More Tools
+        <TabsTrigger value="rotate" className="flex flex-col gap-2 items-center py-2">
+          <RotateCw className="h-5 w-5" /> Rotate
+        </TabsTrigger>
+        <TabsTrigger value="protect" className="flex flex-col gap-2 items-center py-2">
+          <ShieldCheck className="h-5 w-5" /> Protect
+        </TabsTrigger>
+        <TabsTrigger value="watermark" className="flex flex-col gap-2 items-center py-2">
+          <Droplets className="h-5 w-5" /> Watermark
+        </TabsTrigger>
+        <TabsTrigger value="extract" className="flex flex-col gap-2 items-center py-2">
+          <Layers className="h-5 w-5" /> Extract
         </TabsTrigger>
       </TabsList>
       <div className="mt-6">
@@ -41,16 +53,25 @@ export function ConversionTools() {
           <FileUploader />
         </TabsContent>
         <TabsContent value="merge">
-            <PlaceholderTool title="Merge PDFs" description="Combine multiple PDF files into a single document. Upload your files and arrange them in the desired order." />
+          <PdfTool mode="merge" />
         </TabsContent>
         <TabsContent value="split">
-             <PlaceholderTool title="Split PDF" description="Extract one or more pages from a PDF file. Select the pages or ranges you want to split." />
+          <PdfTool mode="split" />
         </TabsContent>
         <TabsContent value="compress">
-             <PlaceholderTool title="Compress PDF" description="Reduce the file size of your PDF while optimizing for maximal quality." />
+          <PdfTool mode="compress" />
         </TabsContent>
-        <TabsContent value="edit">
-             <PlaceholderTool title="More PDF Tools Coming Soon!" description="We are working on adding more tools like Edit, Rotate, Unlock, Watermark, and more. Stay tuned!" />
+        <TabsContent value="rotate">
+          <PdfTool mode="rotate" />
+        </TabsContent>
+        <TabsContent value="protect">
+          <PdfTool mode="encrypt" />
+        </TabsContent>
+        <TabsContent value="watermark">
+          <PdfTool mode="watermark" />
+        </TabsContent>
+        <TabsContent value="extract">
+          <PdfTool mode="extract" />
         </TabsContent>
       </div>
     </Tabs>

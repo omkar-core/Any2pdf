@@ -1,6 +1,14 @@
 import type { Metadata } from 'next';
+import { PT_Sans } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
+
+const ptSans = PT_Sans({
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-pt-sans',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'Any2PDF - Convert Files to PDF',
@@ -14,12 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
-      </head>
-      <body className="font-body antialiased">
+      <body className={`${ptSans.variable} font-body antialiased`}>
         <div className="relative flex min-h-screen flex-col bg-background">
           {children}
         </div>
